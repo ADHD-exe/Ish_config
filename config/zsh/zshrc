@@ -1,0 +1,30 @@
+# $ZDOTDIR/.zshrc — module loader.
+#
+# This file deliberately contains almost no logic. Each module owns one concern
+# and guards its own dependencies, so a missing tool never produces startup
+# output. Order matters: environment must come first, prompt last.
+
+ZSH_MODULE_DIR="${ZDOTDIR:-$HOME/.config/zsh}"
+
+# Load order is fixed. Add new modules to this list rather than sourcing them
+# from inside another module.
+for _mod in \
+    environment \
+    options \
+    history \
+    plugins \
+    completion \
+    keybindings \
+    integrations \
+    aliases \
+    functions \
+    prompt
+do
+    _file="$ZSH_MODULE_DIR/$_mod.zsh"
+    [[ -r "$_file" ]] && source "$_file"
+done
+unset _mod _file
+
+# Local overrides. Not created by the installer and never overwritten by it —
+# this is where your own customisations belong.
+[[ -r "$ZSH_MODULE_DIR/local.zsh" ]] && source "$ZSH_MODULE_DIR/local.zsh"
