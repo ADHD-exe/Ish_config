@@ -1,0 +1,102 @@
+# starship.toml — tuned for a ~40 column iPhone screen.
+#
+# Two lines: context on the first, a single character on the second. Every
+# module that would spawn a subprocess on an emulated CPU is disabled.
+
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$status\
+$line_break\
+$character"""
+
+# Right side carries the clock only; it disappears automatically when the line
+# is too long, which is the behaviour we want at this width.
+right_format = "$time"
+
+add_newline = true
+command_timeout = 1000   # emulated i686 is slow; a 500ms default times out
+
+[username]
+show_always = true
+format = "[$user]($style)"
+style_user = "bold green"
+style_root = "bold red"
+
+[hostname]
+ssh_only = false
+format = "[@$hostname]($style) "
+style = "blue"
+trim_at = "."
+
+[directory]
+truncation_length = 2
+truncate_to_repo = true
+truncation_symbol = ".../"
+format = "[$path]($style)[$read_only]($read_only_style) "
+style = "bold yellow"
+read_only = " ro"
+read_only_style = "red"
+
+[git_branch]
+format = "[$branch]($style) "
+style = "magenta"
+truncation_length = 18
+truncation_symbol = "~"
+# Plain text: Nerd Font glyphs render as tofu in iSH.
+symbol = ""
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = "yellow"
+conflicted = "!"
+ahead = "^${count}"
+behind = "v${count}"
+diverged = "^v"
+untracked = "?"
+stashed = "$"
+modified = "*"
+staged = "+"
+renamed = "»"
+deleted = "x"
+
+[status]
+disabled = false
+format = '[\[$status\]]($style) '
+style = "bold red"
+map_symbol = false
+pipestatus = false
+
+[time]
+disabled = false
+format = "[$time]($style)"
+style = "bright-black"
+time_format = "%H:%M"
+
+[character]
+success_symbol = "[\\$](bold cyan)"
+error_symbol = "[\\$](bold red)"
+
+# --- disabled: too slow or meaningless under iSH ---------------------------
+# Each of these shells out to a version command on every prompt draw.
+[nodejs]
+disabled = true
+[python]
+disabled = true
+[rust]
+disabled = true
+[golang]
+disabled = true
+[package]
+disabled = true
+[cmd_duration]
+disabled = true
+[battery]
+disabled = true
+[memory_usage]
+disabled = true

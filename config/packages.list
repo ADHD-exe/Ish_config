@@ -1,0 +1,73 @@
+# ish-setup package manifest
+#
+# Format:  <state> <package>   where <state> is:
+#   R  required  — a failure here is recorded and reported, but never aborts the run
+#   O  optional  — frequently missing or broken on i686; a failure is expected and quiet
+#
+# Blank lines and lines beginning with '#' are ignored.
+
+# --- core shell + fetch ------------------------------------------------------
+R  zsh
+R  curl
+R  wget
+R  git
+
+# --- GNU userland (BusyBox applets are too limited for most plugins) ---------
+R  coreutils
+R  util-linux
+R  diffutils
+R  findutils
+R  grep
+R  sed
+R  less
+R  file
+R  patch
+R  unzip
+R  zip
+R  shadow
+
+# --- data + network tooling --------------------------------------------------
+R  jq
+R  bind-tools
+R  busybox-extras
+R  iproute2
+R  net-tools
+R  openssh-server
+R  openssh-client-default
+# NOTE: ssh-agent is NOT a package; it ships inside openssh-client-default.
+
+# --- editors + multiplexing --------------------------------------------------
+R  vim
+R  nano
+R  tmux
+R  htop
+
+# --- documentation -----------------------------------------------------------
+R  mandoc
+R  man-pages
+R  less-doc
+
+# --- privilege ---------------------------------------------------------------
+R  sudo
+
+# --- optional: modern CLI replacements ---------------------------------------
+# These are the usual casualties on i686. The zsh config detects each one at
+# startup and silently falls back when it is absent.
+O  starship
+O  zoxide
+O  fzf
+O  eza
+O  ripgrep
+O  fd
+O  atuin
+O  bat
+O  tree
+O  neovim
+O  neofetch
+
+# --- optional: service management --------------------------------------------
+# init does not usefully run under iSH. Included only so `rc-service sshd start`
+# is available to anyone who wants to try it. Safe to delete these three lines.
+O  openrc
+O  util-linux-openrc
+O  iptables-openrc
