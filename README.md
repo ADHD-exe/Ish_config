@@ -10,7 +10,7 @@ From a fresh iSH shell (you are root by default):
 
 ```sh
 apk add curl
-curl -L -o ish-setup.tar.gz [https://github.com/ADHD-exe/Ish_config.git]
+curl -L -o ish-setup.tar.gz https://github.com/ADHD-exe/Ish_config.git
 tar xzf ish-setup.tar.gz
 cd ish-setup
 sh install.sh
