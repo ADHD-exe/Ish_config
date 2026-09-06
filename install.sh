@@ -16,7 +16,8 @@
 
 set -u
 
-VERSION="1.0.0"
+VERSION="1.0.1"
+NO_LOG=0
 
 # Resolve our own directory without letting a stray CDPATH redirect cd.
 unset CDPATH 2>/dev/null || true
@@ -73,11 +74,21 @@ preflight() {
         exit 1
     fi
 
-    log_init || {
-        printf 'ish-setup: cannot write the log file. Aborting.\n' >&2
-        exit 1
-    }
-    backup_init
+    # Logging is a convenience, not a prerequisite. If nothing is writable we
+    # say so clearly and keep going, because refusing to run is worse than
+    # running without a transcript.
+    if ! log_init; then
+        printf '\nish-setup: could not find a writable place for the log.\n' >&2
+        printf 'Tried, in order:\n' >&2
+        printf '  $ISH_SETUP_DIR  = %s\n' "${ISH_SETUP_DIR:-(unset)}" >&2
+        printf '  $HOME/ish-setup = %s\n' "${HOME:-(HOME unset)}/ish-setup" >&2
+        printf '  /root/ish-setup\n  /var/ish-setup\n  /tmp/ish-setup\n' >&2
+        printf '\nContinuing without a log or backups.\n' >&2
+        printf 'To pick a location yourself, rerun as:\n' >&2
+        printf '  ISH_SETUP_DIR=/tmp/ish-setup sh install.sh\n\n' >&2
+        NO_LOG=1
+    fi
+    backup_init || NO_LOG=1
 }
 
 # check_network — verified after the banner so the user sees why we are waiting.
@@ -177,7 +188,11 @@ main_menu() {
             5) ensure_user_selected && do_ish; return 0 ;;
             6)
                 printf '\n'
-                tail -n 40 "$LOG_FILE" 2>/dev/null || ui_note "The log is empty."
+                if [ "$NO_LOG" = "1" ] || [ ! -s "$LOG_FILE" ]; then
+                    ui_note "No log is available for this run."
+                else
+                    tail -n 40 "$LOG_FILE" 2>/dev/null
+                fi
                 ui_pause
                 ;;
             7)
@@ -213,7 +228,11 @@ main() {
     printf ' configured zsh environment.\n\n'
     printf ' Safe to run more than once.\n'
     printf ' Every change is backed up first.\n'
-    printf '\n Log: %s\n' "$LOG_FILE"
+    if [ "$NO_LOG" = "1" ]; then
+        printf '\n %sLog: disabled (nowhere writable)%s\n' "$C_YELLOW" "$C_RESET"
+    else
+        printf '\n Log: %s\n' "$LOG_FILE"
+    fi
 
     check_network
 
