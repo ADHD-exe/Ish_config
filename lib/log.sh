@@ -11,17 +11,62 @@
 #   FAILED_PKGS   space-separated list of packages that would not install
 #   WARN_COUNT    number of warnings emitted
 
-LOG_FILE="${LOG_FILE:-$HOME/ish-setup/install.log}"
+# shellcheck disable=SC2034  # STATE_DIR/LOG_ENABLED are read by other modules
+# STATE_DIR holds the log and the backups. It is resolved at runtime rather than
+# hardcoded to $HOME, because $HOME is not reliably set in every way iSH can be
+# launched, and because a home directory on a mounted iOS Files volume is not
+# always writable.
+STATE_DIR=""
+LOG_FILE=""
+LOG_ENABLED=0
 FAILED_STEPS=""
 FAILED_PKGS=""
 WARN_COUNT=0
 
-# log_init — create the log directory and stamp a run header.
-# Arguments: none. Returns: 0 on success, 1 if the log is not writable.
+# _log_try_dir — test whether a directory can actually be written to.
+# Creating the directory is not proof: some iSH mounts accept mkdir and then
+# refuse the file. Arguments: $1 candidate directory. Returns: 0 if writable.
+_log_try_dir() {
+    [ -n "$1" ] || return 1
+    mkdir -p "$1" 2>/dev/null || return 1
+    if : >>"$1/.write-test" 2>/dev/null; then
+        rm -f "$1/.write-test" 2>/dev/null
+        return 0
+    fi
+    return 1
+}
+
+# log_resolve_dir — pick the first writable location from a candidate list.
+# Sets STATE_DIR and LOG_FILE. Returns: 0 if any candidate worked.
+log_resolve_dir() {
+    for _cand in \
+        "${ISH_SETUP_DIR:-}" \
+        "${HOME:-}/ish-setup" \
+        "/root/ish-setup" \
+        "/var/ish-setup" \
+        "/tmp/ish-setup"
+    do
+        case "$_cand" in
+            ''|/ish-setup) continue ;;   # skips an unset or empty $HOME
+        esac
+        if _log_try_dir "$_cand"; then
+            STATE_DIR=$_cand
+            LOG_FILE="$_cand/install.log"
+            return 0
+        fi
+    done
+    # Last resort: run without a log rather than refuse to run at all.
+    STATE_DIR=""
+    LOG_FILE="/dev/null"
+    return 1
+}
+
+# log_init — resolve a writable location and stamp a run header.
+# Arguments: none. Returns: 0 on success, 1 if no location was writable.
+# A failure is NOT fatal; the installer continues with logging disabled.
 log_init() {
-    _dir=$(dirname "$LOG_FILE")
-    mkdir -p "$_dir" 2>/dev/null || return 1
-    : >>"$LOG_FILE" 2>/dev/null || return 1
+    log_resolve_dir || return 1
+    LOG_ENABLED=1
     {
         printf '\n'
         printf '========================================\n'
